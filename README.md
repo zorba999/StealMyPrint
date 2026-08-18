@@ -174,8 +174,9 @@ appear in `.env.example`; decline. Vite only exposes `VITE_*` to the browser, so
 they would do nothing there anyway — but a private key does not belong in a
 hosting dashboard.
 
-The repo-root `vercel.json` is the alternative setup, used only if Root
-Directory is left at the repository root.
+There is deliberately no `vercel.json` at the repository root: with Root
+Directory set to `web`, Vercel already runs inside `web/`, so a root-level
+`buildCommand` of `cd web && …` resolves to `web/web` and the build fails.
 
 The deploy key stays in `.env.local`, which is gitignored, and is never read by
 the front end.
