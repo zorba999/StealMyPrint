@@ -162,9 +162,20 @@ Vite + React + Tailwind + GSAP, deployed as a static SPA.
 
 ### Deploying to Vercel
 
-`vercel.json` at the repo root builds `web/` and serves `web/dist` with an SPA
-rewrite, so no dashboard configuration is needed. Set `VITE_CONTRACT_ADDRESS`
-as an environment variable to point a deployment at a different instance.
+Import the repo and set **Root Directory** to `web`. Vercel detects the Vite
+preset and `web/vercel.json` supplies the SPA rewrite that keeps `/console`
+working on a direct visit or refresh. No environment variables are required —
+the contract address is compiled in as a fallback; set `VITE_CONTRACT_ADDRESS`
+only to point a deployment at a different instance.
+
+`GENLAYER_PRIVATE_KEY` and `GENLAYER_NETWORK` are for the local deploy script
+and must **not** be added in Vercel. Vercel offers to import them because they
+appear in `.env.example`; decline. Vite only exposes `VITE_*` to the browser, so
+they would do nothing there anyway — but a private key does not belong in a
+hosting dashboard.
+
+The repo-root `vercel.json` is the alternative setup, used only if Root
+Directory is left at the repository root.
 
 The deploy key stays in `.env.local`, which is gitignored, and is never read by
 the front end.
