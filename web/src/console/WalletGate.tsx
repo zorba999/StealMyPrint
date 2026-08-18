@@ -60,7 +60,7 @@ export default function WalletGate() {
           disabled={connecting}
           className="btn-ghost-inv !border-paper/15"
         >
-          {connecting ? "connecting…" : "Connect MetaMask"}
+          {connecting ? "connecting…" : "Connect wallet"}
         </button>
       </div>
 
@@ -70,7 +70,7 @@ export default function WalletGate() {
 
       <p className="mt-5 font-mono text-[10.5px] leading-relaxed text-paper/35">
         A burner is generated in your browser and stored locally — fastest way
-        to try the flow. MetaMask will be asked to switch to chain{" "}
+        to try the flow. A browser wallet will be asked to switch to chain{" "}
         {String(CHAIN.id)}.
       </p>
     </div>
