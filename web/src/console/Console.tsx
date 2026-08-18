@@ -4,7 +4,6 @@ import { useWallet } from "../lib/wallet";
 import {
   CHAIN,
   CONTRACT_ADDRESS,
-  EXPLORER,
   getClaims,
   getModels,
   getStats,
@@ -17,6 +16,7 @@ import {
 import WalletGate from "./WalletGate";
 import TxRail from "./TxRail";
 import VerdictCard from "./VerdictCard";
+import AddressRef from "../components/AddressRef";
 
 type Tab = "registry" | "register" | "investigate" | "cases";
 
@@ -81,14 +81,10 @@ export default function Console() {
           <h1 className="display-lg mt-4">
             Forensic <span className="accent-serif text-electric">desk</span>
           </h1>
-          <a
-            href={EXPLORER ? `${EXPLORER}/contracts/${CONTRACT_ADDRESS}` : "#"}
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-block break-all font-mono text-[11px] text-paper/45 underline decoration-paper/20 underline-offset-4 hover:text-electric"
-          >
-            {CONTRACT_ADDRESS}
-          </a>
+          <AddressRef
+            address={CONTRACT_ADDRESS}
+            className="mt-4 inline-block break-all text-left font-mono text-[11px] text-paper/45 underline decoration-paper/20 underline-offset-4 hover:text-electric"
+          />
         </div>
 
         <WalletGate />

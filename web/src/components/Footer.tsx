@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { gsap, useGsap, splitReveal, magnetic } from "../lib/motion";
-import { CONTRACT_ADDRESS, CHAIN, EXPLORER } from "../lib/contract";
+import { CONTRACT_ADDRESS, CHAIN } from "../lib/contract";
+import AddressRef from "./AddressRef";
 
 export default function Footer({ onEnter }: { onEnter: () => void }) {
   const cta = useRef<HTMLButtonElement>(null);
@@ -54,14 +55,10 @@ export default function Footer({ onEnter }: { onEnter: () => void }) {
 
           <div className="f-meta md:col-span-2">
             <div className="eyebrow text-ink/40">Contract</div>
-            <a
-              href={EXPLORER ? `${EXPLORER}/contracts/${CONTRACT_ADDRESS}` : "#"}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-2 block break-all font-mono text-[12px] underline decoration-ink/25 underline-offset-4 hover:decoration-signal"
-            >
-              {CONTRACT_ADDRESS}
-            </a>
+            <AddressRef
+              address={CONTRACT_ADDRESS}
+              className="mt-2 block break-all text-left font-mono text-[12px] underline decoration-ink/25 underline-offset-4 hover:decoration-signal"
+            />
           </div>
 
           <div className="f-meta md:text-right">

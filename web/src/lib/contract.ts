@@ -12,7 +12,15 @@ export const CONTRACT_ADDRESS =
   import.meta.env.VITE_CONTRACT_ADDRESS ||
   "0x633Fc02B6c89290b6243eF8B0276750Cd800Eee1";
 
-export const EXPLORER = CHAIN.blockExplorers?.default?.url ?? "";
+// The explorer named in the studionet chain config is not currently serving
+// (genlayer-explorer.vercel.app answers 503), so linking there would hand the
+// reader a dead end. Only expose a link for chains that actually have one.
+export const EXPLORER = (CHAIN as any).isStudio
+  ? ""
+  : CHAIN.blockExplorers?.default?.url ?? "";
+
+export const explorerContractUrl = (addr: string) =>
+  EXPLORER ? `${EXPLORER}/contracts/${addr}` : "";
 
 export type Verdict =
   | "CLEAR_VIOLATION"
