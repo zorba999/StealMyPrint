@@ -6,7 +6,7 @@ import { useLayoutEffect, useRef, type RefObject } from "react";
 
 gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase);
 
-/** House easing — a long, weighted settle. Used everywhere for coherence. */
+/** House easing: a long, weighted settle. Used everywhere for coherence. */
 export const EASE = CustomEase.create("smp", "0.16, 1, 0.3, 1");
 export const EASE_IN_OUT = CustomEase.create("smpIO", "0.76, 0, 0.24, 1");
 

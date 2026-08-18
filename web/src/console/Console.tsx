@@ -162,7 +162,7 @@ export default function Console() {
                 run(
                   "verify_ownership",
                   [id],
-                  `Model #${id} verified — fingerprint captured.`
+                  `Model #${id} verified. Fingerprint captured.`
                 )
               }
               disabled={busy || !address}
@@ -188,7 +188,7 @@ export default function Console() {
               disabled={busy || !address}
               onProbe={(url) => run("probe_source", [url], "Probe complete.")}
               onFile={(id, url) =>
-                run("file_claim", [id, url], "Claim adjudicated — see the Case feed.")
+                run("file_claim", [id, url], "Claim adjudicated. See the Case feed.")
               }
             />
           )}
@@ -346,7 +346,7 @@ function RegisterForm({
         <div className="mt-3 grid gap-2">
           {[
             [0, "Personal only", "No commercial use of any kind"],
-            [1, "Prints OK", "Sell printed copies — never the file"],
+            [1, "Prints OK", "Sell printed copies, never the file"],
             [2, "Commercial OK", "Only attribution can be breached"],
           ].map(([v, label, hint]) => (
             <button
@@ -395,7 +395,7 @@ function RegisterForm({
             </li>
             <li>
               <span className="text-electric">2.</span> You paste that code into
-              your own page — proving control without any KYC.
+              your own page, proving control without any KYC.
             </li>
             <li>
               <span className="text-electric">3.</span> Verification renders the
@@ -404,7 +404,7 @@ function RegisterForm({
             </li>
           </ol>
           <p className="mt-6 border-t border-paper/12 pt-4 font-mono text-[10.5px] leading-relaxed text-paper/40">
-            Unverified models can still be investigated — the contract falls
+            Unverified models can still be investigated: the contract falls
             back to the title as its reference.
           </p>
         </div>
@@ -457,7 +457,7 @@ function Investigate({
         >
           {models.map((m) => (
             <option key={m.id} value={m.id}>
-              #{m.id} — {m.title} [{m.license_label}]
+              #{m.id} · {m.title} [{m.license_label}]
             </option>
           ))}
         </select>
@@ -531,7 +531,7 @@ function Investigate({
             Large marketplaces return 403 to the validator renderer. Filing a
             claim against an unreadable page costs compute and returns{" "}
             <span className="font-mono text-electric">UNREADABLE</span>. The
-            probe tells you in advance — and its result is cached on-chain for
+            probe tells you in advance, and its result is cached on-chain for
             everyone else.
           </p>
           <p className="mt-5 border-t border-paper/12 pt-4 font-mono text-[10.5px] leading-relaxed text-paper/40">

@@ -16,7 +16,7 @@ export default function App() {
   const isConsole = path.startsWith("/console");
 
   useEffect(() => {
-    // fonts load after first paint and change line boxes — recompute triggers
+    // fonts load after first paint and change line boxes, so recompute triggers
     const refresh = () => ScrollTrigger.refresh();
     if (document.fonts?.ready) document.fonts.ready.then(refresh);
     window.addEventListener("load", refresh);

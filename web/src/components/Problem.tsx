@@ -37,7 +37,7 @@ export default function Problem() {
       className="relative bg-paper px-5 py-28 sm:px-8 md:py-40"
     >
       <div className="mx-auto max-w-[1600px]">
-        <div className="eyebrow text-ink/40">01 — The asymmetry</div>
+        <div className="eyebrow text-ink/40">01 · The asymmetry</div>
 
         <h2 className="p-head display-lg mt-6 max-w-5xl">
           Stealing costs nothing.
@@ -52,7 +52,7 @@ export default function Problem() {
               and lists it as an{" "}
               <span className="accent-serif">instant download</span>. The
               designer has to find it themselves, fill a form, prove ownership,
-              wait weeks — and watch the shop reappear under a new name.
+              wait weeks, and watch the shop reappear under a new name.
             </p>
             <p className="mt-5 text-[17px] leading-relaxed text-ink/75">
               Meanwhile the honest printer selling a{" "}
@@ -93,7 +93,7 @@ export default function Problem() {
             <span className="accent-serif text-signal">
               which of these two things
             </span>{" "}
-            is being sold — and that is a reading task, not a hashing task.
+            is being sold, and that is a reading task, not a hashing task.
           </p>
         </div>
       </div>

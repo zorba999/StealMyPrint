@@ -62,7 +62,7 @@ export default function TxRail({ steps }: { steps: TxStep[] }) {
           ))}
         </ol>
         <p className="mt-5 border-t border-paper/10 pt-4 font-mono text-[10.5px] text-paper/35">
-          Web rendering plus model inference across validators — 60 to 240
+          Web rendering plus model inference across validators: 60 to 240
           seconds is normal. Keep this tab open.
         </p>
       </div>

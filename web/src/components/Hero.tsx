@@ -98,7 +98,7 @@ export default function Hero({ onEnter }: { onEnter: () => void }) {
         <div className="mt-12 grid gap-8 border-t border-ink/15 pt-7 md:grid-cols-12">
           <p className="hero-meta md:col-span-5 max-w-md text-[15px] leading-relaxed text-ink/70">
             Most 3D-model licences let anyone sell a{" "}
-            <span className="accent-serif">printed copy</span> — and forbid
+            <span className="accent-serif">printed copy</span>, and forbid
             reselling the <span className="accent-serif">file</span>. One
             sentence in a listing separates the two. That sentence is the whole
             job, and no ordinary contract can read it.

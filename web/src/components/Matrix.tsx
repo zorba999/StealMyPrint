@@ -104,7 +104,7 @@ export default function Matrix() {
       className="relative bg-paper px-5 py-28 sm:px-8 md:py-40"
     >
       <div className="mx-auto max-w-[1600px]">
-        <div className="eyebrow text-ink/40">03 — The judgement</div>
+        <div className="eyebrow text-ink/40">03 · The judgement</div>
         <h2 className="m-head display-lg mt-5 max-w-4xl">
           The verdict is a <span className="accent-serif">matrix</span>,
           <br />
@@ -173,7 +173,7 @@ export default function Matrix() {
 
             <p className="mt-5 font-mono text-[11px] leading-relaxed text-ink/45">
               Hover any cell. Attribution is a third axis the contract also
-              reports — it can turn a permitted listing into a minor breach
+              reports: it can turn a permitted listing into a minor breach
               without changing the cell.
             </p>
           </div>

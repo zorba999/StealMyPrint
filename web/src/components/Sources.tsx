@@ -9,10 +9,10 @@ const SOURCES: { host: string; state: State; note: string; mode: string }[] = [
   { host: "instructables.com", state: "flaky", mode: "html", note: "Returns 0 chars as text; needs the html pass." },
   { host: "cults3d.com", state: "flaky", mode: "text", note: "Served 2.9k chars, then 403'd once probed repeatedly. Retried twice per claim." },
   { host: "myminifactory.com", state: "flaky", mode: "text", note: "Responds with a body but a non-200 status on unknown paths." },
-  { host: "printables.com", state: "blocked", mode: "—", note: "HTTP 403 to the renderer." },
-  { host: "thingiverse.com", state: "blocked", mode: "—", note: "HTTP 403 to the renderer." },
-  { host: "makerworld.com", state: "blocked", mode: "—", note: "HTTP 403 to the renderer." },
-  { host: "etsy.com", state: "blocked", mode: "—", note: "HTTP 403 to the renderer." },
+  { host: "printables.com", state: "blocked", mode: "n/a", note: "HTTP 403 to the renderer." },
+  { host: "thingiverse.com", state: "blocked", mode: "n/a", note: "HTTP 403 to the renderer." },
+  { host: "makerworld.com", state: "blocked", mode: "n/a", note: "HTTP 403 to the renderer." },
+  { host: "etsy.com", state: "blocked", mode: "n/a", note: "HTTP 403 to the renderer." },
 ];
 
 const STATE_META: Record<State, { label: string; cls: string; dot: string }> = {
@@ -36,7 +36,7 @@ export default function Sources() {
       className="relative bg-ink px-5 py-28 text-paper sm:px-8 md:py-40"
     >
       <div className="mx-auto max-w-[1600px]">
-        <div className="eyebrow text-paper/40">04 — What actually works</div>
+        <div className="eyebrow text-paper/40">04 · What actually works</div>
         <h2 className="s-head display-lg mt-5 max-w-4xl">
           Half the internet
           <br />
@@ -51,7 +51,7 @@ export default function Sources() {
             </p>
             <p className="mt-5 text-[16px] leading-relaxed text-paper/55">
               Large marketplaces return <span className="font-mono text-signal">403</span>{" "}
-              to the validator renderer. So the contract does not guess — it
+              to the validator renderer. So the contract does not guess: it
               returns <span className="font-mono text-electric">UNREADABLE</span>,
               refunds the stake and punishes nobody. The console runs a
               pre-flight probe so a hunter finds out before they commit.

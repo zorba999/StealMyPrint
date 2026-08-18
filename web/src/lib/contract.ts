@@ -60,7 +60,7 @@ export interface Stats {
   min_stake: string;
 }
 
-/** genlayer-js decodes calldata maps into JS `Map`s — flatten them to objects. */
+/** genlayer-js decodes calldata maps into JS `Map`s, so flatten them to objects. */
 function demap(value: any): any {
   if (value instanceof Map) {
     const out: Record<string, any> = {};
@@ -96,7 +96,7 @@ export const getHunter = (addr: string) => read<any>("get_hunter", [addr]);
 export const getSourceProbe = (url: string) =>
   read<string>("get_source_probe", [url]);
 
-/** Burner key management — testnet convenience wallet held in localStorage. */
+/** Burner key management: testnet convenience wallet held in localStorage. */
 const BURNER_KEY = "smp.burner.pk";
 
 export function loadBurner() {

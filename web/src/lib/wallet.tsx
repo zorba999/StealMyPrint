@@ -90,7 +90,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         const c = createClient({ chain: CHAIN, account: addr as `0x${string}`, provider: eth });
         await c.connect(NETWORK as any);
       } catch {
-        /* user may already be on it, or declined the switch — keep going */
+        /* user may already be on it, or declined the switch, so keep going */
       }
 
       setAccount(addr);
@@ -201,7 +201,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
-/** Contract `raise Exception("…")` arrives wrapped in VM noise — dig it out. */
+/** Contract `raise Exception("…")` arrives wrapped in VM noise, so dig it out. */
 function cleanError(raw: string) {
   if (!raw) return "Transaction failed";
   const m = raw.match(/Exception:?\s*([^"'\\}]{6,300})/);

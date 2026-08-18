@@ -13,7 +13,7 @@ and returns a **structured verdict** settled by validator consensus.
 
 Almost every 3D-model licence permits selling a **printed copy** and forbids
 redistributing the **file**. Which one a listing is doing comes down to a
-sentence of marketing copy — "instant digital download" versus "ships in 3–5
+sentence of marketing copy: "instant digital download" versus "ships in 3–5
 days". That is a reading task.
 
 A conventional smart contract cannot fetch the page, cannot read the sentence,
@@ -118,13 +118,13 @@ These were measured against the live network, not assumed.
 **Large marketplaces bot-gate the validator renderer.** Printables, Thingiverse,
 MakerWorld and Etsy all return HTTP `403`. Cults3D served 2.9k characters and
 then started refusing once probed repeatedly. Gumroad returns **0 characters** in
-`text` mode and 117k in `html` mode, but it is a single-page app — stripping the
-markup leaves no prose, and `_extract_meta` did not recover enough metadata
+`text` mode and 117k in `html` mode, but it is a single-page app.
+Stripping the markup leaves no prose, and `_extract_meta` did not recover enough metadata
 either, so it is adjudicated as `UNREADABLE`.
 
 `_render_readable` therefore tries text, then html with tags stripped, then
 og:/JSON-LD metadata, retrying each mode twice. Pages that survive that chain
-(openscad.org, wikipedia.org) adjudicate correctly — the seeded Wikipedia claim
+(openscad.org, wikipedia.org) adjudicate correctly: the seeded Wikipedia claim
 returns `NO_VIOLATION` at confidence 95 with reasoning that cites the page.
 
 When a page cannot be read, the contract returns `UNREADABLE`, refunds the stake
@@ -142,7 +142,7 @@ DMCA form, plus a public registry of repeat offenders.
 payouts accrue to an on-chain credit balance; withdrawing back to a wallet is not
 wired up in this version.
 
-**Adjudication is slow and costs real compute** — 60–240 seconds per claim, web
+**Adjudication is slow and costs real compute.** 60–240 seconds per claim, web
 rendering plus inference across every validator. That is why staking exists.
 
 ---
@@ -164,14 +164,14 @@ Vite + React + Tailwind + GSAP, deployed as a static SPA.
 
 Import the repo and set **Root Directory** to `web`. Vercel detects the Vite
 preset and `web/vercel.json` supplies the SPA rewrite that keeps `/console`
-working on a direct visit or refresh. No environment variables are required —
+working on a direct visit or refresh. No environment variables are required:
 the contract address is compiled in as a fallback; set `VITE_CONTRACT_ADDRESS`
 only to point a deployment at a different instance.
 
 `GENLAYER_PRIVATE_KEY` and `GENLAYER_NETWORK` are for the local deploy script
 and must **not** be added in Vercel. Vercel offers to import them because they
 appear in `.env.example`; decline. Vite only exposes `VITE_*` to the browser, so
-they would do nothing there anyway — but a private key does not belong in a
+they would do nothing there anyway, but a private key does not belong in a
 hosting dashboard.
 
 There is deliberately no `vercel.json` at the repository root: with Root

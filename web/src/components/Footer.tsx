@@ -73,7 +73,7 @@ export default function Footer({ onEnter }: { onEnter: () => void }) {
         </div>
 
         <div className="mt-10 flex flex-wrap items-baseline justify-between gap-4 border-t border-ink/15 pt-6 font-mono text-[10.5px] uppercase tracking-[0.16em] text-ink/35">
-          <span>StealMyPrint — forensic layer for 3D-model IP</span>
+          <span>StealMyPrint · forensic layer for 3D-model IP</span>
           <span>Built on GenLayer Intelligent Contracts</span>
         </div>
       </div>

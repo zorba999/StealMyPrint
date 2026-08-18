@@ -5,7 +5,7 @@ const STEPS = [
     n: "01",
     title: "Register",
     lede: "Claim the work without asking anyone for permission.",
-    body: "You submit the model's title, its canonical page and a licence tier. The contract mints you a proof code — glp-4e00ed-1 — which you paste into your own model description or profile bio.",
+    body: "You submit the model's title, its canonical page and a licence tier. The contract mints you a proof code, glp-4e00ed-1, which you paste into your own model description or profile bio.",
     tag: "register_model()",
   },
   {
@@ -119,7 +119,7 @@ export default function HowItWorks() {
       className="relative overflow-hidden bg-ink text-paper"
     >
       <div className="mx-auto max-w-[1600px] px-5 pt-24 sm:px-8 md:pt-28">
-        <div className="eyebrow text-paper/40">02 — The process</div>
+        <div className="eyebrow text-paper/40">02 · The process</div>
         <h2 className="how-head display-lg mt-5 max-w-4xl">
           Five moves from{" "}
           <span className="accent-serif text-electric">upload</span> to evidence.
