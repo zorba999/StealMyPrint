@@ -1,0 +1,23 @@
+import { readFileSync } from "fs";
+import { createClient, createAccount } from "genlayer-js";
+import { studionet } from "genlayer-js/chains";
+import { TransactionStatus } from "genlayer-js/types";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+const account = createAccount(process.env.GENLAYER_PRIVATE_KEY);
+const client = createClient({ chain: studionet, account });
+const code = new Uint8Array(readFileSync("scripts/probe3.py"));
+const tx = await client.deployContract({ code, args: [] });
+const r = await client.waitForTransactionReceipt({ hash: tx, status: TransactionStatus.ACCEPTED, retries: 300 });
+const addr = r.data?.contract_address;
+console.log("addr:", addr);
+console.log("gl.vm API:", await client.readContract({ address: addr, functionName: "vm", args: [] }));
+
+const url = "https://www.thingiverse.com/thing:763622";
+console.log("\n→ running nondet adjudication on:", url);
+const t0 = Date.now();
+const wtx = await client.writeContract({ address: addr, functionName: "run", args: [url], value: 0n });
+const wr = await client.waitForTransactionReceipt({ hash: wtx, status: TransactionStatus.ACCEPTED, retries: 400 });
+console.log("exec:", wr.consensus_data?.leader_receipt?.[0]?.execution_result, "| took", ((Date.now()-t0)/1000).toFixed(1)+"s");
+console.log("votes:", JSON.stringify(wr.consensus_data?.validators?.map(v=>v.vote) ?? wr.consensus_data?.leader_receipt?.map(x=>x.vote)));
+console.log("RESULT:", await client.readContract({ address: addr, functionName: "get", args: [] }));

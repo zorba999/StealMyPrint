@@ -1,0 +1,14 @@
+import { readFileSync } from "fs";
+import { createClient, createAccount } from "genlayer-js";
+import { studionet } from "genlayer-js/chains";
+import { TransactionStatus } from "genlayer-js/types";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+const account = createAccount(process.env.GENLAYER_PRIVATE_KEY);
+const client = createClient({ chain: studionet, account });
+const code = new Uint8Array(readFileSync("scripts/probe2.py"));
+const tx = await client.deployContract({ code, args: [] });
+const r = await client.waitForTransactionReceipt({ hash: tx, status: TransactionStatus.ACCEPTED, retries: 300 });
+const addr = r.data?.contract_address;
+console.log("addr", addr);
+console.log(await client.readContract({ address: addr, functionName: "sigs", args: [] }));
