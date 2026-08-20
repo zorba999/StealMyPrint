@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test/e2e-stake-accounting.mjs",
+    "deploy": "node deploy/deploy.mjs",
+    "seed": "node scripts/seed.mjs"
   },
   "keywords": [],
   "author": "",

@@ -40,7 +40,8 @@ printing community. This contract clears it.
 | --- | --- |
 | Network | GenLayer Studio Network (chain `61999`) |
 | RPC | `https://studio.genlayer.com/api` |
-| Contract | `0x633Fc02B6c89290b6243eF8B0276750Cd800Eee1` |
+| Contract | `0x59Caec417077C7f8B8897fD00Bc79D94645620f5` |
+| Minimum stake | `1000000000000000` wei (0.001 GEN) |
 
 ---
 
@@ -82,8 +83,8 @@ node deploy/deploy.mjs && npm --prefix web install && npm --prefix web run dev
 | `register_model(title, canonical_url, license_tier)` | write | Mints a proof code |
 | `verify_ownership(model_id)` | write · nondet | Renders your page, finds the code, snapshots a fingerprint |
 | `probe_source(url)` | write · nondet | Pre-flight: is this URL readable at all? Cached per URL |
-| `file_claim(model_id, suspect_url)` | payable · nondet | The adjudication |
-| `fund_bounty(model_id, bounty_per_hit)` | payable | Tops up the pool |
+| `file_claim(model_id, suspect_url)` | payable · nondet | The adjudication. The stake is the transaction value |
+| `fund_bounty(model_id, bounty_per_hit)` | payable | The deposit is the transaction value |
 | `get_models` / `get_claims` / `get_stats` / `get_hunter` / `get_source_probe` | view | |
 
 ### Ownership proof without KYC
@@ -138,12 +139,65 @@ ninety seconds still beats one hundred percent in six weeks.
 Etsy. The output is a fast, signed, structured evidence packet you attach to a
 DMCA form, plus a public registry of repeat offenders.
 
-**Settlement is a ledger.** `fund_bounty` is payable and stakes are real, but
-payouts accrue to an on-chain credit balance; withdrawing back to a wallet is not
-wired up in this version.
+**Settlement is a ledger.** Stakes and bounty deposits are real transaction
+value and leave the sender's wallet, but payouts accrue to an on-chain credit
+balance; withdrawing that balance back to a wallet is not wired up in this
+version.
 
 **Adjudication is slow and costs real compute.** 60–240 seconds per claim, web
 rendering plus inference across every validator. That is why staking exists.
+
+---
+
+## Staking and bounties
+
+`file_claim` and `fund_bounty` are payable, and the console sends the amount as
+the transaction value rather than defaulting to zero.
+
+- **Filing a claim.** The Investigate tab has a stake field, pre-filled with the
+  contract's `min_stake` and validated against it, so an under-staked claim is
+  blocked in the UI as well as rejected on chain. The button shows the amount it
+  is about to send.
+- **Funding a bounty.** The Fund a bounty tab is restricted to models you own.
+  The deposit is sent as the value and lands in that model's pool; the payout per
+  confirmed hit is stored alongside it.
+- **Getting GEN.** A freshly generated burner holds nothing, which would make the
+  payable path unreachable once `min_stake` is positive. The Studio network
+  exposes `sim_fundAccount` over RPC, so the console offers a one-click faucet and
+  shows the live balance, warning when it cannot cover a stake.
+
+Amounts are parsed from decimal strings straight to `BigInt` in
+`web/src/lib/units.ts`, never through `Number`, so `0.1` GEN is exactly
+`100000000000000000` wei.
+
+### End-to-end test
+
+```bash
+node test/e2e-stake-accounting.mjs
+```
+
+Runs against the live deployment through the same genlayer-js path the browser
+uses, and asserts that `min_stake` is enforced, that a deposit lands in the pool
+intact, that a properly staked claim is accepted, and that the resulting
+accounting balances. Expected settlement is derived from the verdict that
+actually came back rather than one assumed in advance:
+
+```
+CLEAR_VIOLATION | LIKELY -> reward = min(bounty_per_hit, pool)
+                            pool -= reward ; payout = reward + stake
+NO_VIOLATION             -> slashed = stake // 2
+                            pool += slashed ; payout = stake - slashed
+GRAY_ZONE | UNREADABLE   -> pool unchanged ; payout = stake
+```
+
+Last run: **15 passed, 0 failed**.
+
+The same flow was then driven through the browser console end to end: a burner
+generated in the page, funded from the faucet, staking 0.002 GEN on a claim. The
+contract recorded `stake = 2000000000000000` wei from hunter
+`0x5c5636A9F12B99E3B57339BaE45c5Ef442F5347A`, returned `NO_VIOLATION` at
+confidence 99, credited `1000000000000000` as the payout, moved the other half
+into the model's pool, and the wallet balance fell from 1 GEN to 0.998 GEN.
 
 ---
 

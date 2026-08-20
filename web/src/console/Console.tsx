@@ -17,13 +17,15 @@ import WalletGate from "./WalletGate";
 import TxRail from "./TxRail";
 import VerdictCard from "./VerdictCard";
 import AddressRef from "../components/AddressRef";
+import { toWei, fromWei } from "../lib/units";
 
-type Tab = "registry" | "register" | "investigate" | "cases";
+type Tab = "registry" | "register" | "investigate" | "bounty" | "cases";
 
 const TABS: [Tab, string][] = [
   ["registry", "Registry"],
   ["register", "Register a model"],
   ["investigate", "Investigate a listing"],
+  ["bounty", "Fund a bounty"],
   ["cases", "Case feed"],
 ];
 
@@ -54,11 +56,16 @@ export default function Console() {
     refresh();
   }, [refresh]);
 
-  const run = async (fn: string, args: any[], okMsg: string) => {
+  const run = async (
+    fn: string,
+    args: any[],
+    okMsg: string,
+    value: bigint = 0n
+  ) => {
     setErr(null);
     setOk(null);
     try {
-      await send(fn, args);
+      await send(fn, args, value);
       setOk(okMsg);
       await refresh();
     } catch (e: any) {
@@ -95,7 +102,7 @@ export default function Console() {
             ["Models registered", stats?.models ?? 0],
             ["Claims adjudicated", stats?.claims ?? 0],
             ["Confirmed breaches", stats?.confirmed ?? 0],
-            ["Min stake (wei)", stats?.min_stake ?? "0"],
+            ["Min stake (GEN)", fromWei(stats?.min_stake ?? "0")],
           ].map(([label, value]) => (
             <div key={label as string} className="c-stat bg-coal p-5">
               <div className="eyebrow text-paper/40">{label}</div>
@@ -181,10 +188,32 @@ export default function Console() {
           {!loading && tab === "investigate" && (
             <Investigate
               models={models}
+              minStake={stats?.min_stake ?? "0"}
               disabled={busy || !address}
               onProbe={(url) => run("probe_source", [url], "Probe complete.")}
-              onFile={(id, url) =>
-                run("file_claim", [id, url], "Claim adjudicated. See the Case feed.")
+              onFile={(id, url, stake) =>
+                run(
+                  "file_claim",
+                  [id, url],
+                  "Claim adjudicated. See the Case feed.",
+                  stake
+                )
+              }
+            />
+          )}
+
+          {!loading && tab === "bounty" && (
+            <FundBounty
+              models={models}
+              address={address}
+              disabled={busy || !address}
+              onFund={(id, perHit, deposit) =>
+                run(
+                  "fund_bounty",
+                  [id, perHit],
+                  "Bounty funded. The pool is updated in the Registry.",
+                  deposit
+                )
               }
             />
           )}
@@ -258,6 +287,16 @@ function Registry({
               </span>
               <span className="chip border-paper/20 text-paper/60">
                 {m.claims_filed} claims
+              </span>
+              <span
+                className={
+                  "chip " +
+                  (BigInt(m.bounty_pool) > 0n
+                    ? "border-electric/50 text-electric"
+                    : "border-paper/20 text-paper/60")
+                }
+              >
+                pool {fromWei(m.bounty_pool)} GEN
               </span>
               <span
                 className={
@@ -412,19 +451,34 @@ function RegisterForm({
 /* --------------------------------------------------------------- investigate */
 function Investigate({
   models,
+  minStake,
   onProbe,
   onFile,
   disabled,
 }: {
   models: ModelRow[];
+  minStake: string;
   onProbe: (url: string) => void;
-  onFile: (id: number, url: string) => void;
+  onFile: (id: number, url: string, stake: bigint) => void;
   disabled: boolean;
 }) {
   const [modelId, setModelId] = useState<number>(models[0]?.id ?? 1);
   const [url, setUrl] = useState("");
   const [probe, setProbe] = useState<any>(null);
   const [checking, setChecking] = useState(false);
+
+  const minWei = BigInt(minStake || "0");
+  const [stake, setStake] = useState(fromWei(minWei));
+
+  let stakeWei: bigint | null = null;
+  let stakeError: string | null = null;
+  try {
+    stakeWei = toWei(stake);
+    if (stakeWei < minWei)
+      stakeError = `Below the minimum stake of ${fromWei(minWei)} GEN`;
+  } catch {
+    stakeError = "Enter an amount in GEN, for example 0.01";
+  }
 
   const readProbe = async () => {
     if (!url.trim()) return;
@@ -469,6 +523,31 @@ function Investigate({
           placeholder="https://…"
         />
 
+        <label className="eyebrow mt-6 block text-paper/40">
+          Stake (GEN){" "}
+          <span className="normal-case tracking-normal text-paper/30">
+            minimum {fromWei(minWei)}
+          </span>
+        </label>
+        <input
+          className="field-inv mt-2"
+          value={stake}
+          inputMode="decimal"
+          onChange={(e) => setStake(e.target.value)}
+          placeholder="0.01"
+        />
+        <p className="mt-2 font-mono text-[10.5px] leading-relaxed text-paper/40">
+          {stakeError ? (
+            <span className="text-signal">{stakeError}</span>
+          ) : (
+            <>
+              Sends {stakeWei?.toString()} wei with the transaction. Returned in
+              full on a confirmed hit or an unreadable page; half is forfeited
+              into the model&apos;s bounty pool if the report is unfounded.
+            </>
+          )}
+        </p>
+
         <div className="mt-5 flex flex-wrap gap-3">
           <button
             disabled={disabled || !url.trim()}
@@ -485,11 +564,11 @@ function Investigate({
             {checking ? "reading…" : "read probe result"}
           </button>
           <button
-            disabled={disabled || !url.trim()}
-            onClick={() => onFile(modelId, url.trim())}
+            disabled={disabled || !url.trim() || !!stakeError || stakeWei === null}
+            onClick={() => onFile(modelId, url.trim(), stakeWei as bigint)}
             className="btn !bg-signal !text-paper hover:!bg-paper hover:!text-ink"
           >
-            2 · File claim
+            2 · File claim{stakeWei ? ` · ${fromWei(stakeWei)} GEN` : ""}
           </button>
         </div>
 
@@ -533,6 +612,133 @@ function Investigate({
           <p className="mt-5 border-t border-paper/12 pt-4 font-mono text-[10.5px] leading-relaxed text-paper/40">
             Adjudication takes 60–240s. The leader fetches the page and reasons
             over it; validators re-run it and vote on equivalence.
+          </p>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- fund bounty */
+function FundBounty({
+  models,
+  address,
+  onFund,
+  disabled,
+}: {
+  models: ModelRow[];
+  address: string | null;
+  onFund: (id: number, perHit: bigint, deposit: bigint) => void;
+  disabled: boolean;
+}) {
+  const mine = models.filter(
+    (m) => address && m.owner.toLowerCase() === address.toLowerCase()
+  );
+
+  const [modelId, setModelId] = useState<number>(mine[0]?.id ?? 0);
+  const [deposit, setDeposit] = useState("0.05");
+  const [perHit, setPerHit] = useState("0.01");
+
+  let depositWei: bigint | null = null;
+  let perHitWei: bigint | null = null;
+  let error: string | null = null;
+  try {
+    depositWei = toWei(deposit);
+    perHitWei = toWei(perHit);
+    if (depositWei === 0n) error = "Deposit something for hunters to claim";
+    else if (perHitWei === 0n) error = "Set a payout per confirmed hit";
+    else if (perHitWei > depositWei)
+      error = "Payout per hit is larger than the deposit";
+  } catch {
+    error = "Enter amounts in GEN, for example 0.05";
+  }
+
+  if (!address)
+    return (
+      <Empty title="Connect to fund" body="Only a model owner can fund its bounty." />
+    );
+
+  if (!mine.length)
+    return (
+      <Empty
+        title="You have no registered models"
+        body="fund_bounty is restricted to the owner of the model."
+      />
+    );
+
+  const selected = mine.find((m) => m.id === modelId);
+
+  return (
+    <div className="grid gap-8 lg:grid-cols-12">
+      <div className="lg:col-span-7">
+        <label className="eyebrow text-paper/40">Your model</label>
+        <select
+          className="field-inv mt-2 bg-coal"
+          value={modelId}
+          onChange={(e) => setModelId(Number(e.target.value))}
+        >
+          {mine.map((m) => (
+            <option key={m.id} value={m.id}>
+              #{m.id} · {m.title}
+            </option>
+          ))}
+        </select>
+
+        <div className="mt-6 grid gap-5 sm:grid-cols-2">
+          <div>
+            <label className="eyebrow block text-paper/40">Deposit (GEN)</label>
+            <input
+              className="field-inv mt-2"
+              value={deposit}
+              inputMode="decimal"
+              onChange={(e) => setDeposit(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="eyebrow block text-paper/40">
+              Payout per confirmed hit (GEN)
+            </label>
+            <input
+              className="field-inv mt-2"
+              value={perHit}
+              inputMode="decimal"
+              onChange={(e) => setPerHit(e.target.value)}
+            />
+          </div>
+        </div>
+
+        {selected && (
+          <p className="mt-4 font-mono text-[10.5px] text-paper/40">
+            Current pool {fromWei(selected.bounty_pool)} GEN, paying{" "}
+            {fromWei(selected.bounty_per_hit)} GEN per hit.
+          </p>
+        )}
+
+        {error && (
+          <p className="mt-3 font-mono text-[10.5px] text-signal">{error}</p>
+        )}
+
+        <button
+          disabled={disabled || !!error || !depositWei || !perHitWei}
+          onClick={() => onFund(modelId, perHitWei as bigint, depositWei as bigint)}
+          className="btn-ghost-inv mt-7"
+        >
+          Fund bounty · {deposit} GEN
+        </button>
+      </div>
+
+      <aside className="lg:col-span-5">
+        <div className="rounded-2xl border border-paper/12 bg-coal p-6">
+          <div className="eyebrow text-paper/40">How the pool is spent</div>
+          <p className="mt-4 text-[13.5px] leading-relaxed text-paper/60">
+            The deposit is sent as the transaction value and held against your
+            model. On a CLEAR_VIOLATION or LIKELY verdict the hunter is credited
+            the payout per hit, capped at whatever the pool still holds, plus
+            their stake back.
+          </p>
+          <p className="mt-4 text-[13.5px] leading-relaxed text-paper/60">
+            An unfounded report works the other way: half the hunter&apos;s stake
+            is forfeited into this pool, so bad reports fund good ones.
           </p>
         </div>
       </aside>

@@ -17,6 +17,8 @@ dotenv.config({ path: ".env.local" });
 
 const CONTRACT_PATH = "contracts/steal_my_print.py";
 const NETWORK = process.env.GENLAYER_NETWORK || "studionet";
+// Wei, so it must stay a BigInt: Number() would silently lose precision on
+// anything above ~9e15.
 const MIN_STAKE = process.env.GENLAYER_MIN_STAKE ?? "0";
 
 const chain = chains[NETWORK];
@@ -55,7 +57,7 @@ if (balance === 0n) {
 console.log(`\ndeploying ${CONTRACT_PATH} (min_stake=${MIN_STAKE}) ...`);
 const txHash = await client.deployContract({
   code,
-  args: [Number(MIN_STAKE)],
+  args: [BigInt(MIN_STAKE)],
 });
 console.log(`tx        ${txHash}`);
 

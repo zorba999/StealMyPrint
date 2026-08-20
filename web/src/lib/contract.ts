@@ -10,7 +10,7 @@ export const CHAIN = chains[NETWORK] ?? chains.studionet;
 /** Deployed StealMyPrint instance. Overridable per-environment. */
 export const CONTRACT_ADDRESS =
   import.meta.env.VITE_CONTRACT_ADDRESS ||
-  "0x633Fc02B6c89290b6243eF8B0276750Cd800Eee1";
+  "0x59Caec417077C7f8B8897fD00Bc79D94645620f5";
 
 // The explorer named in the studionet chain config is not currently serving
 // (genlayer-explorer.vercel.app answers 503), so linking there would hand the
@@ -103,6 +103,35 @@ export const getStats = () => read<Stats>("get_stats");
 export const getHunter = (addr: string) => read<any>("get_hunter", [addr]);
 export const getSourceProbe = (url: string) =>
   read<string>("get_source_probe", [url]);
+
+export async function getBalance(address: string): Promise<bigint> {
+  return readClient().getBalance({ address: address as `0x${string}` });
+}
+
+/**
+ * The Studio sandbox exposes a faucet over its RPC. Without it a freshly
+ * generated burner holds nothing, so with a positive min_stake the whole claim
+ * path would be unreachable from the browser.
+ */
+export const HAS_FAUCET = Boolean((CHAIN as any).isStudio);
+
+export async function fundFromFaucet(address: string, gen = 1n) {
+  if (!HAS_FAUCET) throw new Error("This network has no faucet");
+  const rpc = CHAIN.rpcUrls.default.http[0];
+  const res = await fetch(rpc, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id: 1,
+      method: "sim_fundAccount",
+      params: [address, Number(gen * 10n ** 18n)],
+    }),
+  });
+  const json = await res.json();
+  if (json.error) throw new Error(json.error.message || "Faucet call failed");
+  return json.result as string;
+}
 
 /** Burner key management: testnet convenience wallet held in localStorage. */
 const BURNER_KEY = "smp.burner.pk";
