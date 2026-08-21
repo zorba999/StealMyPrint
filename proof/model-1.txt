@@ -1,0 +1,13 @@
+StealMyPrint ownership proof
+============================
+
+This file stands in for the model description or profile bio a designer would
+normally control on Cults3D, Printables or Patreon. verify_ownership renders
+this page and looks for the code the contract minted at registration.
+
+Model: Parametric Shelf Bracket
+Proof code: glp-4e00ed-1
+
+Anyone can read this file. Only the account that registered model #1 could have
+been issued this exact code, and only someone who controls this repository can
+publish it here. Holding both is what proves the registration is genuine.
