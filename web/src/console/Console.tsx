@@ -8,6 +8,7 @@ import {
   getModels,
   getStats,
   getSourceProbe,
+  getHunter,
   exportBurner,
   type ClaimRow,
   type ModelRow,
@@ -95,6 +96,17 @@ export default function Console() {
         </div>
 
         <WalletGate />
+
+        {address && (
+          <CreditsBar
+            address={address}
+            disabled={busy}
+            refreshKey={claims.length}
+            onWithdraw={() =>
+              run("withdraw", [], "Withdrawal submitted. It settles on finalization.")
+            }
+          />
+        )}
 
         {/* stats */}
         <div className="c-stats mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-xl bg-paper/12 md:grid-cols-4">
@@ -213,6 +225,13 @@ export default function Console() {
                   [id, perHit],
                   "Bounty funded. The pool is updated in the Registry.",
                   deposit
+                )
+              }
+              onDefund={(id, amount) =>
+                run(
+                  "withdraw_bounty",
+                  [id, amount],
+                  "Bounty withdrawal submitted. It settles on finalization."
                 )
               }
             />
@@ -462,7 +481,8 @@ function Investigate({
   onFile: (id: number, url: string, stake: bigint) => void;
   disabled: boolean;
 }) {
-  const [modelId, setModelId] = useState<number>(models[0]?.id ?? 1);
+  const claimable = models.filter((m) => m.verified);
+  const [modelId, setModelId] = useState<number>(claimable[0]?.id ?? 0);
   const [url, setUrl] = useState("");
   const [probe, setProbe] = useState<any>(null);
   const [checking, setChecking] = useState(false);
@@ -496,16 +516,29 @@ function Investigate({
   if (!models.length)
     return <Empty title="Nothing to investigate" body="Register a model first." />;
 
+  if (!claimable.length)
+    return (
+      <Empty
+        title="No verified registrations yet"
+        body="Claims are only adjudicated against models whose owner has proven control of the canonical page. Verify one from the Registry tab first."
+      />
+    );
+
   return (
     <div className="grid gap-8 lg:grid-cols-12">
       <div className="lg:col-span-7">
-        <label className="eyebrow text-paper/40">Registered work</label>
+        <label className="eyebrow text-paper/40">
+          Verified work{" "}
+          <span className="normal-case tracking-normal text-paper/30">
+            unverified registrations cannot be claimed against
+          </span>
+        </label>
         <select
           className="field-inv mt-2 bg-coal"
           value={modelId}
           onChange={(e) => setModelId(Number(e.target.value))}
         >
-          {models.map((m) => (
+          {claimable.map((m) => (
             <option key={m.id} value={m.id}>
               #{m.id} · {m.title} [{m.license_label}]
             </option>
@@ -619,16 +652,64 @@ function Investigate({
   );
 }
 
+/* -------------------------------------------------------------------- credits */
+function CreditsBar({
+  address,
+  onWithdraw,
+  disabled,
+  refreshKey,
+}: {
+  address: string;
+  onWithdraw: () => void;
+  disabled: boolean;
+  refreshKey: number;
+}) {
+  const [credits, setCredits] = useState<string>("0");
+
+  useEffect(() => {
+    let live = true;
+    getHunter(address)
+      .then((h) => live && setCredits(String(h?.credits ?? "0")))
+      .catch(() => live && setCredits("0"));
+    return () => {
+      live = false;
+    };
+  }, [address, refreshKey, disabled]);
+
+  const owed = BigInt(credits || "0");
+
+  return (
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-paper/12 bg-coal px-5 py-4">
+      <div>
+        <div className="eyebrow text-paper/40">Withdrawable credits</div>
+        <div className="mt-1 font-display text-2xl tracking-tight">
+          {fromWei(owed)} GEN
+        </div>
+      </div>
+
+      <button
+        disabled={disabled || owed === 0n}
+        onClick={onWithdraw}
+        className="btn-ghost-inv !py-2 !text-[10px]"
+      >
+        Withdraw credits
+      </button>
+    </div>
+  );
+}
+
 /* ---------------------------------------------------------------- fund bounty */
 function FundBounty({
   models,
   address,
   onFund,
+  onDefund,
   disabled,
 }: {
   models: ModelRow[];
   address: string | null;
   onFund: (id: number, perHit: bigint, deposit: bigint) => void;
+  onDefund: (id: number, amount: bigint) => void;
   disabled: boolean;
 }) {
   const mine = models.filter(
@@ -718,13 +799,25 @@ function FundBounty({
           <p className="mt-3 font-mono text-[10.5px] text-signal">{error}</p>
         )}
 
-        <button
-          disabled={disabled || !!error || !depositWei || !perHitWei}
-          onClick={() => onFund(modelId, perHitWei as bigint, depositWei as bigint)}
-          className="btn-ghost-inv mt-7"
-        >
-          Fund bounty · {deposit} GEN
-        </button>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <button
+            disabled={disabled || !!error || !depositWei || !perHitWei}
+            onClick={() => onFund(modelId, perHitWei as bigint, depositWei as bigint)}
+            className="btn-ghost-inv"
+          >
+            Fund bounty · {deposit} GEN
+          </button>
+
+          {selected && BigInt(selected.bounty_pool) > 0n && (
+            <button
+              disabled={disabled}
+              onClick={() => onDefund(modelId, BigInt(selected.bounty_pool))}
+              className="btn-ghost-inv !border-paper/15"
+            >
+              Withdraw pool · {fromWei(selected.bounty_pool)} GEN
+            </button>
+          )}
+        </div>
       </div>
 
       <aside className="lg:col-span-5">

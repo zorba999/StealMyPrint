@@ -10,7 +10,7 @@ export const CHAIN = chains[NETWORK] ?? chains.studionet;
 /** Deployed StealMyPrint instance. Overridable per-environment. */
 export const CONTRACT_ADDRESS =
   import.meta.env.VITE_CONTRACT_ADDRESS ||
-  "0x59Caec417077C7f8B8897fD00Bc79D94645620f5";
+  "0x064e61699CC0EB4f185bF14CECfd80AEdB34daCa";
 
 // The explorer named in the studionet chain config is not currently serving
 // (genlayer-explorer.vercel.app answers 503), so linking there would hand the

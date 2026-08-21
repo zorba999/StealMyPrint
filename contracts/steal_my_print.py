@@ -360,6 +360,45 @@ class StealMyPrint(gl.Contract):
         model.bounty_per_hit = u256(bounty_per_hit)
 
     # =========================================================================
+    # settlement
+    # =========================================================================
+    @gl.public.write
+    def withdraw(self) -> None:
+        """Pay a hunter's accrued credits out to their wallet.
+
+        The ledger is cleared before the transfer is emitted, so a re-entrant
+        call finds nothing left to claim.
+        """
+        sender = gl.message.sender_address
+        amount = int(self.hunter_credits.get(sender, u256(0)))
+        if amount == 0:
+            raise Exception("no credits to withdraw")
+
+        self.hunter_credits[sender] = u256(0)
+        gl.get_contract_at(sender).emit_transfer(value=u256(amount))
+
+    @gl.public.write
+    def withdraw_bounty(self, model_id: int, amount: int) -> None:
+        """Let an owner pull unspent bounty back out of the pool."""
+        mid = u256(model_id)
+        if mid not in self.models:
+            raise Exception("unknown model")
+
+        model = self.models[mid]
+        if model.owner != gl.message.sender_address:
+            raise Exception("only the model owner can withdraw its bounty")
+
+        want = int(amount)
+        pool = int(model.bounty_pool)
+        if want <= 0 or want > pool:
+            raise Exception(
+                "amount must be between 1 and the pool balance of " + str(pool)
+            )
+
+        model.bounty_pool = u256(pool - want)
+        gl.get_contract_at(model.owner).emit_transfer(value=u256(want))
+
+    # =========================================================================
     # adjudication
     # =========================================================================
     @gl.public.write.payable
@@ -369,6 +408,18 @@ class StealMyPrint(gl.Contract):
             raise Exception("unknown model")
         if not suspect_url.startswith("http"):
             raise Exception("suspect_url must be an http(s) URL")
+
+        model = self.models[mid]
+
+        # An unverified registration proves nothing: anyone could register a
+        # work they do not own and farm verdicts against a competitor. Refuse
+        # to adjudicate until ownership has been demonstrated.
+        if not model.verified:
+            raise Exception(
+                "model #" + str(int(mid)) + " is not verified. Its owner must "
+                "prove control of " + model.canonical_url + " before claims can "
+                "be adjudicated against it"
+            )
 
         stake = int(gl.message.value)
         if stake < int(self.min_stake):
@@ -381,7 +432,6 @@ class StealMyPrint(gl.Contract):
                 + str(int(self.seen_urls[key]))
             )
 
-        model = self.models[mid]
         hunter = gl.message.sender_address
 
         tier = int(model.license_tier)
@@ -730,4 +780,7 @@ Respond with ONLY this JSON, no prose, no code fences:
             "claims": int(self.claim_count),
             "confirmed": int(self.confirmed_total),
             "min_stake": str(int(self.min_stake)),
+            "verified_models": sum(
+                1 for i in self.model_ids if self.models[i].verified
+            ),
         }

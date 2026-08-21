@@ -40,7 +40,7 @@ printing community. This contract clears it.
 | --- | --- |
 | Network | GenLayer Studio Network (chain `61999`) |
 | RPC | `https://studio.genlayer.com/api` |
-| Contract | `0x59Caec417077C7f8B8897fD00Bc79D94645620f5` |
+| Contract | `0x064e61699CC0EB4f185bF14CECfd80AEdB34daCa` |
 | Minimum stake | `1000000000000000` wei (0.001 GEN) |
 
 ---
@@ -83,9 +83,18 @@ node deploy/deploy.mjs && npm --prefix web install && npm --prefix web run dev
 | `register_model(title, canonical_url, license_tier)` | write | Mints a proof code |
 | `verify_ownership(model_id)` | write · nondet | Renders your page, finds the code, snapshots a fingerprint |
 | `probe_source(url)` | write · nondet | Pre-flight: is this URL readable at all? Cached per URL |
-| `file_claim(model_id, suspect_url)` | payable · nondet | The adjudication. The stake is the transaction value |
+| `file_claim(model_id, suspect_url)` | payable · nondet | The adjudication. Verified models only; the stake is the transaction value |
 | `fund_bounty(model_id, bounty_per_hit)` | payable | The deposit is the transaction value |
+| `withdraw()` | write | Pays a hunter's accrued credits out to their wallet |
+| `withdraw_bounty(model_id, amount)` | write | Lets an owner pull unspent bounty back |
 | `get_models` / `get_claims` / `get_stats` / `get_hunter` / `get_source_probe` | view | |
+
+### Claims only settle against verified registrations
+
+`file_claim` refuses to adjudicate a model whose owner has not proven control of
+its canonical page. Without that rule anyone could register a work they do not
+own and farm verdicts against a competitor, and the console hides unverified
+models from the Investigate tab for the same reason.
 
 ### Ownership proof without KYC
 
@@ -139,10 +148,14 @@ ninety seconds still beats one hundred percent in six weeks.
 Etsy. The output is a fast, signed, structured evidence packet you attach to a
 DMCA form, plus a public registry of repeat offenders.
 
-**Settlement is a ledger.** Stakes and bounty deposits are real transaction
-value and leave the sender's wallet, but payouts accrue to an on-chain credit
-balance; withdrawing that balance back to a wallet is not wired up in this
-version.
+**Value transfers out are debited but not credited on studionet.** `withdraw`
+and `withdraw_bounty` use `emit_transfer`, and the contract balance falls by
+exactly the amount released, but the recipient wallet is never credited on the
+Studio sandbox. This was reproduced in isolation with `scripts/probe7.py` for
+both `on="accepted"` and `on="finalized"`, so it is a property of the
+environment rather than of this contract. The test asserts the contract-side
+accounting, which is exact, and records the recipient side as an environment
+note.
 
 **Adjudication is slow and costs real compute.** 60–240 seconds per claim, web
 rendering plus inference across every validator. That is why staking exists.
@@ -176,8 +189,10 @@ Amounts are parsed from decimal strings straight to `BigInt` in
 node test/e2e-stake-accounting.mjs
 ```
 
-Runs against the live deployment through the same genlayer-js path the browser
-uses, and asserts that `min_stake` is enforced, that a deposit lands in the pool
+Deploys its own instance, then runs through the same genlayer-js path the
+browser uses. It asserts that `min_stake` is enforced, that claims are refused
+against an unverified registration, that `verify_ownership` succeeds against a
+page the registrant controls, that a deposit lands in the pool
 intact, that a properly staked claim is accepted, and that the resulting
 accounting balances. Expected settlement is derived from the verdict that
 actually came back rather than one assumed in advance:
@@ -190,7 +205,16 @@ NO_VIOLATION             -> slashed = stake // 2
 GRAY_ZONE | UNREADABLE   -> pool unchanged ; payout = stake
 ```
 
-Last run: **15 passed, 0 failed**.
+The registration it verifies points at `proof/model-1.txt` in this repository,
+which carries the proof code the contract mints for model #1 of the deploying
+account. `raw.githubusercontent.com` is readable by the validator renderer, so
+the repo can host the proof the way a designer would host it on their own
+listing.
+
+Withdrawal is covered by a separate funded account, so a payout is not masked by
+the fees the deployer would pay as both sender and recipient.
+
+Last run: **32 passed, 0 failed, 1 environment note**.
 
 The same flow was then driven through the browser console end to end: a burner
 generated in the page, funded from the faucet, staking 0.002 GEN on a claim. The
